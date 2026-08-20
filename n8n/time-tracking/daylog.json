@@ -1,0 +1,3643 @@
+{
+  "name": "daylog",
+  "nodes": [
+    {
+      "id": "e7cba17c-b6df-4c77-96f2-544511e5024a",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        2016
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "credentials": {},
+      "webhookId": "35277a58-f66c-42a7-a020-b804fe9458ec"
+    },
+    {
+      "id": "e5f50b73-4710-405d-98a7-a7d54b8f25df",
+      "name": "Parse Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        2016
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const msg = ($input.first().json.message) || {};\nconst raw = String(msg.text || '').trim();\nlet text = raw;\nif (text.charAt(0) === '/') text = text.slice(1);\nconst parts = text.split(/\\s+/);\nlet first = String(parts[0] || '').toLowerCase();\nfirst = first.split('@')[0];\nconst rest = parts.slice(1).join(' ');\nconst noArg = { out:'out', o:'out', now:'now', n:'now', sum:'sum', s:'sum', week:'week', w:'week', tags:'tags', t:'tags' };\nconst oneArg = { in:'in', i:'in', switch:'switch', sw:'switch', add:'add', '+':'add', del:'del', '-':'del' };\nlet command = 'unknown';\nlet arg = '';\nlet arg2 = '';\nif (noArg[first]) {\n  command = noArg[first];\n} else if (oneArg[first]) {\n  command = oneArg[first];\n  arg = String(parts[1] || '').toLowerCase();\n} else if (first === 'rename') {\n  command = 'rename';\n  arg = String(parts[1] || '').toLowerCase();\n  arg2 = String(parts[2] || '').toLowerCase();\n} else if (first === 'note') {\n  command = 'note';\n  arg = rest;\n} else if (raw !== '' && parts.length === 1) {\n  command = 'bare_tag';\n  arg = first;\n} else {\n  command = 'unknown';\n}\nconst chatId = (msg.chat || {}).id;\nreturn [{ json: { command, arg, arg2, raw, chatId } }];"
+      }
+    },
+    {
+      "id": "625f2056-9b39-4aa9-97b0-138b2d23621b",
+      "name": "Get Active Log",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        2016
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "filterByFormula": "{status}='active'",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "1cb1d14f-6417-480e-85b6-2c7bf6d0e3c9",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        1840
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "renameOutput": true,
+              "outputKey": "in",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "in",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "out",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "out",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "switch",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "switch",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "now",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "now",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "sum",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "sum",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "week",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "week",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "tags",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "tags",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "add",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "add",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "del",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "del",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "note",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "note",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "rename",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "rename",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "renameOutput": true,
+              "outputKey": "bare_tag",
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c1",
+                    "leftValue": "={{ $('Parse Command').item.json.command }}",
+                    "rightValue": "bare_tag",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      }
+    },
+    {
+      "id": "0a5b6119-f7b5-40bb-a823-6d2d64bdc60a",
+      "name": "Active? (in)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        96
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Active Log').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "68a63bb7-42ff-4675-8fa1-96619f1bca9a",
+      "name": "Build Busy (in)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var rec=$('Get Active Log').item.json;\nvar newTag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nvar mins=Math.max(0,Math.round((Date.now()-new Date(rec.start_time).getTime())/60000));\nvar h=Math.floor(mins/60),m=mins%60;var el=h>0?(h+'h '+m+'m'):(m+'m');\nvar reply=rec.category+' is still running for '+el+'. stop it first with out or switch '+newTag;\nreturn [{json:{reply:reply,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "f1b791bd-73d0-44a7-be0e-dd2003c2a7a2",
+      "name": "Send Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2464,
+        1968
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.reply }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {},
+      "webhookId": "626d9adb-48cc-46d3-9f20-b7c85c50aa0a"
+    },
+    {
+      "id": "8304ac50-c018-4919-bac2-778240af426c",
+      "name": "Get Category (in)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        192
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "filterByFormula": "=AND(LOWER({name})='{{ $('Parse Command').item.json.arg }}',{active}=1)",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "04aa75e1-8c94-4e24-bb59-cbabd28c9bc2",
+      "name": "Tag Exists? (in)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        192
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Category (in)').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "467dc8dc-b2ce-4f43-a2c3-620fdb63b5ce",
+      "name": "Create Log (in)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        192
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "category": "={{ $('Parse Command').item.json.arg }}",
+            "start_time": "={{ $now.setZone('Asia/Kolkata').toISO() }}",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "status": "active",
+            "source": "telegram"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "b89ea29c-7cb4-48cb-96ec-319c6b0c3fbb",
+      "name": "Build Started (in)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nvar t=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'}).format(new Date()).toLowerCase();\nreturn [{json:{reply:'started '+tag+' at '+t,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "2401635b-e861-4cc1-92a7-485abe14db79",
+      "name": "Build Unknown Tag (in)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        384
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'unknown tag '+tag+'. add it with add '+tag,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "b86eaa4f-5bc8-4d0f-a8ae-aee6198c1e12",
+      "name": "Active? (out)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        576
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Active Log').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b64a16e5-c46c-465a-8431-0cdbff13ae90",
+      "name": "Compute Out (out)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        576
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var rec=$('Get Active Log').item.json;\nvar start=new Date(rec.start_time).getTime();\nvar mins=Math.round((Date.now()-start)/60000);if(mins<0)mins=0;\nreturn [{json:{id:rec.id,category:rec.category,end_time:new Date().toISOString(),duration_minutes:mins}}];"
+      }
+    },
+    {
+      "id": "558a9d40-3aa2-487e-9789-efac8fe01b19",
+      "name": "Update Log (out)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        576
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "update",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.id }}",
+            "end_time": "={{ $json.end_time }}",
+            "duration_minutes": "={{ $json.duration_minutes }}",
+            "status": "completed"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "f34741fb-8dc9-40c6-a1d4-92b672fed8ab",
+      "name": "Build Stopped (out)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        576
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nvar c=$('Compute Out (out)').item.json;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'stopped '+c.category+' \\u2013 '+fmt(c.duration_minutes)+' logged',chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "2d61c9f7-c49e-4308-8c5a-e5d52bc930a1",
+      "name": "Build Nothing (out)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        768
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'nothing running rn',chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "7c39f06f-2212-43a7-833e-5785f9e84519",
+      "name": "Active? (switch)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        960
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Active Log').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e5e932fb-de7a-415d-8daa-f1c7f778d9e1",
+      "name": "Compute Out (switch)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        944
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var rec=$('Get Active Log').item.json;\nvar start=new Date(rec.start_time).getTime();\nvar mins=Math.round((Date.now()-start)/60000);if(mins<0)mins=0;\nreturn [{json:{id:rec.id,category:rec.category,end_time:new Date().toISOString(),duration_minutes:mins}}];"
+      }
+    },
+    {
+      "id": "a6ddd768-980a-422e-a52e-e0ef1dc436e0",
+      "name": "Update Log (switch)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        944
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "update",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.id }}",
+            "end_time": "={{ $json.end_time }}",
+            "duration_minutes": "={{ $json.duration_minutes }}",
+            "status": "completed"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "1f7b39b7-9dc4-4c39-be55-4392f1618186",
+      "name": "Get Category (switch)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        960
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "filterByFormula": "=AND(LOWER({name})='{{ $('Parse Command').item.json.arg }}',{active}=1)",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "3c4bdf51-562c-4800-b5da-3f15a8831bc3",
+      "name": "Active? (now)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2016,
+        1344
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Active Log').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "3c4cd3b8-20bf-4fb9-a06f-77d75ec6089b",
+      "name": "Build Now",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1344
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nvar rec=$('Get Active Log').item.json;\nvar chatId=$('Parse Command').item.json.chatId;\nvar mins=Math.round((Date.now()-new Date(rec.start_time).getTime())/60000);\nreturn [{json:{reply:rec.category+' running for '+fmt(mins),chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "95503843-afc1-4569-aa82-fd337dadb428",
+      "name": "Build Nothing (now)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1536
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'nothing running rn',chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "dd8db4c1-bf82-4fc4-8709-c5638223312b",
+      "name": "Search Today Logs",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        1728
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "filterByFormula": "=AND({date}='{{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}',{status}='completed')",
+        "returnAll": true
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "0280641a-5311-473f-a8f2-10b457851610",
+      "name": "Aggregate Sum",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1728
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nvar chatId=($('Telegram Trigger').item.json.message.chat||{}).id;\nvar LF=String.fromCharCode(10);\nvar items=$input.all().map(function(i){return i.json;}).filter(function(r){return Object.keys(r).length>0;});\nvar totals={};var total=0;\nfor(var k=0;k<items.length;k++){var r=items[k];var c=r.category||'general';var d=Number(r.duration_minutes)||0;totals[c]=(totals[c]||0)+d;total+=d;}\nvar keys=Object.keys(totals).sort(function(a,b){return totals[b]-totals[a];});\nvar lines=keys.map(function(c){return c+' '+fmt(totals[c]);});\nvar reply;\nif(total===0){reply='today:'+LF+'nothing logged yet';}\nelse{reply='today:'+LF+lines.join(LF)+LF+LF+'total '+fmt(total);}\nreturn [{json:{reply:reply,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "e097f803-d341-4735-9aad-3fdddf0a3935",
+      "name": "Search Week Logs",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        1920
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "filterByFormula": "=AND({date}>='{{ $now.setZone('Asia/Kolkata').startOf('week').toFormat('yyyy-MM-dd') }}',{date}<='{{ $now.setZone('Asia/Kolkata').endOf('week').toFormat('yyyy-MM-dd') }}',{status}='completed')",
+        "returnAll": true
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "3235e8fb-34bc-414b-8966-8d5b5ce0fac3",
+      "name": "Aggregate Week",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1920
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nfunction ymd(d){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(d);}\nvar LF=String.fromCharCode(10);\nvar now=new Date();\nvar wd=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',weekday:'short'}).format(now);\nvar map={Mon:0,Tue:1,Wed:2,Thu:3,Fri:4,Sat:5,Sun:6};var off=map[wd]||0;var dayMs=86400000;\nvar monday=new Date(now.getTime()-off*dayMs);var sunday=new Date(monday.getTime()+6*dayMs);\nvar week_start=ymd(monday);var week_end=ymd(sunday);\nvar items=$input.all().map(function(i){return i.json;}).filter(function(r){return Object.keys(r).length>0;});\nvar totals={};var total=0;\nfor(var k=0;k<items.length;k++){var r=items[k];var c=r.category||'general';var d=Number(r.duration_minutes)||0;totals[c]=(totals[c]||0)+d;total+=d;}\nvar keys=Object.keys(totals).sort(function(a,b){return totals[b]-totals[a];});\nvar lines=keys.map(function(c){return c+' '+fmt(totals[c]);});\nvar breakdown=keys.map(function(c){return c+': '+fmt(totals[c]);}).join(', ');\nvar topCat=keys.length?keys[0]:'';\nvar totalHours=Math.round((total/60)*10)/10;\nvar reply;\nif(total===0){reply='this week:'+LF+'nothing logged yet';}\nelse{reply='this week ('+week_start+' to '+week_end+'):'+LF+lines.join(LF)+LF+LF+'total '+fmt(total);}\nvar chatId=($('Telegram Trigger').item.json.message.chat||{}).id;\nreturn [{json:{reply:reply,chatId:chatId,week_start:week_start,week_end:week_end,total_hours:totalHours,category_breakdown:breakdown,top_category:topCat,generated_at:new Date().toISOString()}}];"
+      }
+    },
+    {
+      "id": "5114c1d6-5fa3-49d1-8b11-15e494a67943",
+      "name": "Upsert Weekly Summary",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2464,
+        2208
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "upsert",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "weekly_summary"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "week_start"
+          ],
+          "value": {
+            "week_start": "={{ $json.week_start }}",
+            "week_end": "={{ $json.week_end }}",
+            "total_hours": "={{ $json.total_hours }}",
+            "category_breakdown": "={{ $json.category_breakdown }}",
+            "generated_at": "={{ $json.generated_at }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "71da06fb-787a-4fe6-a71e-592a927fde31",
+      "name": "Search Active Categories",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        2112
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "filterByFormula": "{active}=1",
+        "returnAll": true,
+        "sort": {
+          "property": [
+            {
+              "field": "name",
+              "direction": "asc"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "e9bb0e4d-7255-48ec-909d-0fcdf5260350",
+      "name": "Aggregate Tags",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        2112
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=($('Telegram Trigger').item.json.message.chat||{}).id;\nvar LF=String.fromCharCode(10);\nvar items=$input.all().map(function(i){return i.json;}).filter(function(r){return Object.keys(r).length>0;});\nvar names=items.map(function(r){return r.name;}).filter(Boolean);\nvar reply=names.length?('tags:'+LF+names.join(LF)):'no tags yet';\nreturn [{json:{reply:reply,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "9fc28455-2d69-4216-86f0-d359a1bcad71",
+      "name": "Create Category",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        2304
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "name": "={{ $('Parse Command').item.json.arg }}",
+            "type": "custom",
+            "active": true,
+            "created_at": "={{ $now.setZone('Asia/Kolkata').toISO() }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "3a899904-527c-4f90-9e98-1867ffcd38dc",
+      "name": "Build Added",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        2304
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'added '+tag,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "584fe68a-3726-4f06-983f-12544940a5dc",
+      "name": "Is General? (del)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        2688
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Parse Command').item.json.arg }}",
+              "rightValue": "general",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "5eb8d855-dc0a-46b2-9c95-63c259bddbaa",
+      "name": "Build Refuse (del)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        2496
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:\"can't delete general \\u2013 it's the fallback tag\",chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "ef76c495-85ca-47db-90d9-5ea60640882e",
+      "name": "Get Category (del)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        2784
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "filterByFormula": "=LOWER({name})='{{ $('Parse Command').item.json.arg }}'",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "8dd854e3-e52d-4b69-a574-239b3d1c26c8",
+      "name": "Category Exists? (del)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        2784
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Category (del)').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "a07f7029-0407-4a2e-bfa1-766bef843b55",
+      "name": "Search Logs For Tag",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        2688
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "filterByFormula": "=LOWER({category})='{{ $('Parse Command').item.json.arg }}'",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "c3770318-d4d5-4a19-8620-6c84db248df7",
+      "name": "Has Logs? (del)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        2688
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Search Logs For Tag').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "87950ed1-747f-40a9-a2b4-d95721623543",
+      "name": "Update Category (archive)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        2688
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "update",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Get Category (del)').item.json.id }}",
+            "active": false
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "4dd2cb22-fa72-4456-887f-cb507ce4ea89",
+      "name": "Build Archived",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        2688
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'archived '+tag+' \\u2013 old logs are safe',chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "5ce9605e-f9e7-4fd1-ae24-2dac5799d8a9",
+      "name": "Delete Category",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        2880
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "deleteRecord",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "id": "={{ $('Get Category (del)').item.json.id }}"
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "d0d0aff7-f329-4228-93f2-7d50002e55b5",
+      "name": "Build Deleted",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        2880
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'deleted '+tag,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "95415f9b-b2de-48e8-80bc-d63d3c5c0054",
+      "name": "Build Unknown (del)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        3072
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'unknown tag '+tag,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "91221e44-a055-4d6a-85a4-b94a0a67524e",
+      "name": "Active? (note)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        3264
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Active Log').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "494eb7b9-3383-473e-921d-df556ce7ff9a",
+      "name": "Compute Note",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        3264
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var rec=$('Get Active Log').item.json;\nvar note=$('Parse Command').item.json.arg;\nvar existing=rec.notes||'';\nvar LF=String.fromCharCode(10);\nvar merged=existing?(existing+LF+note):note;\nreturn [{json:{id:rec.id,category:rec.category,notes:merged}}];"
+      }
+    },
+    {
+      "id": "daf4b759-705b-40a6-96c6-552c38bf180b",
+      "name": "Update Log Notes",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        3264
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "update",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $json.id }}",
+            "notes": "={{ $json.notes }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "d39e1fb8-1447-425f-9c30-8b76f81db4b7",
+      "name": "Build Noted",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        3264
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var cat=$('Compute Note').item.json.category;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'noted under '+cat,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "56a92a7e-b7d1-42f2-9851-59c3c4ceee6d",
+      "name": "Create General Note",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        3456
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "category": "general",
+            "notes": "={{ $('Parse Command').item.json.arg }}",
+            "status": "manual",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "source": "telegram"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "fe8e1aa3-d9b8-4ea8-9ca3-2be9bb1f19fa",
+      "name": "Build Saved (note)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        3456
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'saved under general',chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "9493508f-9080-4d70-9fe0-2871da65920b",
+      "name": "Is General? (rename)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1344,
+        3744
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Parse Command').item.json.arg }}",
+              "rightValue": "general",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b3ef3e66-7133-43b1-b523-7401b37e4b13",
+      "name": "Build Refuse (rename)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        3648
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:\"can't rename general\",chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "0d7d8598-4e2d-4db9-b188-3412cb3c095f",
+      "name": "Get Category (rename)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        3840
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "filterByFormula": "=LOWER({name})='{{ $('Parse Command').item.json.arg }}'",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "2dff2c9c-e964-40da-ab66-39b4dacd3584",
+      "name": "Category Exists? (rename)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        3840
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Category (rename)').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "901d38bf-f8a3-4b1c-b044-d2d5eb24b40b",
+      "name": "Update Category (rename)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        3840
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "update",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "value": {
+            "id": "={{ $('Get Category (rename)').item.json.id }}",
+            "name": "={{ $('Parse Command').item.json.arg2 }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "03d23fb7-d1d3-4e74-8703-896c6b7af003",
+      "name": "Build Renamed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        3840
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var oldT=$('Parse Command').item.json.arg;\nvar newT=$('Parse Command').item.json.arg2;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'renamed '+oldT+' to '+newT,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "35125c0f-ac9b-4361-9ea1-2b5486419fb9",
+      "name": "Build Unknown (rename)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        4032
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'unknown tag '+tag,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "7c4fefac-800a-4122-b05e-bd14623ab3b8",
+      "name": "Get Category (bare)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        4320
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "categories"
+        },
+        "filterByFormula": "=AND(LOWER({name})='{{ $('Parse Command').item.json.arg }}',{active}=1)",
+        "returnAll": false,
+        "limit": 1
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "a6e1899f-2a07-40b7-84ac-ba7f7d48a284",
+      "name": "Tag Exists? (bare)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        4320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Category (bare)').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "ff156372-99c5-4ac9-8b35-191647725fe8",
+      "name": "Active? (bare)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        4224
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Active Log').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "d9a0840f-879f-4126-bd74-93e4c9eae7b9",
+      "name": "Build Nudge (bare)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        4224
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nvar rec=$('Get Active Log').item.json;\nvar newTag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nvar mins=Math.round((Date.now()-new Date(rec.start_time).getTime())/60000);\nvar reply=rec.category+' is still running for '+fmt(mins)+'. stop it first with out or switch '+newTag;\nreturn [{json:{reply:reply,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "8c912961-ffcc-4838-9a94-921e1318d744",
+      "name": "Create Log (bare)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        4416
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "category": "={{ $('Parse Command').item.json.arg }}",
+            "start_time": "={{ $now.setZone('Asia/Kolkata').toISO() }}",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "status": "active",
+            "source": "telegram"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "6de6f2c5-3d6a-4047-b977-3dd6ff1a5f25",
+      "name": "Build Started (bare)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        4416
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nvar t=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'}).format(new Date()).toLowerCase();\nreturn [{json:{reply:'started '+tag+' at '+t,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "cf5756c8-5871-42bc-905d-e1c20456d95d",
+      "name": "Build Unknown (bare)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        4608
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nvar LF=String.fromCharCode(10);\nreturn [{json:{reply:'not a known command or tag. try tags to list, or add <tag>',chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "1ae944c7-a763-4f89-97c0-ba7a6d565c1b",
+      "name": "Build Help",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        4800
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var chatId=$('Parse Command').item.json.chatId;\nvar LF=String.fromCharCode(10);\nvar reply=['commands:','in <tag> / out / switch <tag>','now / sum / week / tags','add <tag> / del <tag> / rename <old> <new>','note <text>'].join(LF);\nreturn [{json:{reply:reply,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "4de48457-101a-4474-ad14-4b40d642da15",
+      "name": "Tag Exists? (switch)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1792,
+        960
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('Get Category (switch)').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "03fba889-68c5-495a-b654-c228b1d67ac4",
+      "name": "Create Log (switch)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        960
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "category": "={{ $('Parse Command').item.json.arg }}",
+            "start_time": "={{ $now.setZone('Asia/Kolkata').toISO() }}",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "status": "active",
+            "source": "telegram"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "6710f732-83be-400b-acd6-575646f8f26b",
+      "name": "Build Switched",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        960
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nvar prev=$('Get Active Log').item.json;\nvar wasActive=!!prev.id;\nvar newTag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nvar t=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'Asia/Kolkata'}).format(new Date()).toLowerCase();\nvar LF=String.fromCharCode(10);\nvar reply;\nif(wasActive){var d=$('Compute Out (switch)').item.json.duration_minutes;reply='stopped '+prev.category+' \\u2013 '+fmt(d)+' logged'+LF+'started '+newTag+' at '+t;}\nelse{reply='started '+newTag+' at '+t;}\nreturn [{json:{reply:reply,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "53184ce5-7f92-4f60-b34c-b3e86811603b",
+      "name": "Build Unknown Tag (switch)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1152
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "var tag=$('Parse Command').item.json.arg;\nvar chatId=$('Parse Command').item.json.chatId;\nreturn [{json:{reply:'unknown tag '+tag+'. add it with add '+tag,chatId:chatId}}];"
+      }
+    },
+    {
+      "id": "e1d6313c-3f16-40b5-ba69-b3f8ad42fc0b",
+      "name": "Morning 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        5024
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "3e100423-642d-416a-b0a1-851898be3abe",
+      "name": "Create Standup (morning)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        5024
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "standups"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "type": "morning",
+            "prompt": "morning standup\ntop 3 priorities today?\nany fixed events?\nwhat would make today a win?",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "created_at": "={{ $now.setZone('Asia/Kolkata').toISO() }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "ea0615d3-a387-452e-9393-37b91fa43300",
+      "name": "Send Standup (morning)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        5024
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram chat ID for daily standups__>",
+        "text": "morning standup\ntop 3 priorities today?\nany fixed events?\nwhat would make today a win?",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {},
+      "webhookId": "7bc8ab2d-b4c8-4b15-8ff7-edd10d94ab0a"
+    },
+    {
+      "id": "b0d860f8-bd0a-48ed-b48b-d93384f62e18",
+      "name": "Midday 14:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        5248
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 14,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "e67eeb2d-1969-4f20-a625-e27cfda21d27",
+      "name": "Create Standup (midday)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        5248
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "standups"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "type": "midday",
+            "prompt": "midday check-in\nwhat are you working on?\non track?\nany blockers?",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "created_at": "={{ $now.setZone('Asia/Kolkata').toISO() }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "8cf23909-5010-4e34-926b-b91cb726d97e",
+      "name": "Send Standup (midday)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        5248
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram chat ID for daily standups__>",
+        "text": "midday check-in\nwhat are you working on?\non track?\nany blockers?",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {},
+      "webhookId": "34179da8-ba0e-4ec2-88ab-98580fd0b7c8"
+    },
+    {
+      "id": "c75f14e2-62c5-4d1c-ba2d-73d2011bf49b",
+      "name": "Evening 22:30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        5472
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1,
+              "triggerAtHour": 22,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "777f619b-4d62-4d93-bfdc-518a9db55913",
+      "name": "Create Standup (evening)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        5472
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "create",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "standups"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "type": "evening",
+            "prompt": "evening shutdown\nwhat got done?\nwhat slipped?\nany blockers?\ncarry-over for tomorrow?",
+            "date": "={{ $now.setZone('Asia/Kolkata').toFormat('yyyy-MM-dd') }}",
+            "created_at": "={{ $now.setZone('Asia/Kolkata').toISO() }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "31414101-9376-4e33-8d96-0b19cf615162",
+      "name": "Send Standup (evening)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        5472
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram chat ID for daily standups__>",
+        "text": "evening shutdown\nwhat got done?\nwhat slipped?\nany blockers?\ncarry-over for tomorrow?",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {},
+      "webhookId": "01d4c36f-3219-424a-90b1-02cba4e18863"
+    },
+    {
+      "id": "610d5e07-249f-4e49-99ea-b49bea90ea33",
+      "name": "Weekly Sun 20:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        5792
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                0
+              ],
+              "triggerAtHour": 20,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "28dbd7e1-8d40-4087-a140-e3c8b97dcb95",
+      "name": "Search Week Logs (review)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        5792
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "search",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "time_logs"
+        },
+        "filterByFormula": "=AND({date}>='{{ $now.setZone('Asia/Kolkata').startOf('week').toFormat('yyyy-MM-dd') }}',{date}<='{{ $now.setZone('Asia/Kolkata').endOf('week').toFormat('yyyy-MM-dd') }}',{status}='completed')",
+        "returnAll": true
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "7dae78db-fa3f-48ac-9015-4fbf4142a346",
+      "name": "Aggregate Weekly Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        5792
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "function fmt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60);var mm=m%60;return h>0?(h+'h '+mm+'m'):(mm+'m');}\nfunction ymd(d){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata'}).format(d);}\nvar LF=String.fromCharCode(10);\nvar now=new Date();\nvar wd=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',weekday:'short'}).format(now);\nvar map={Mon:0,Tue:1,Wed:2,Thu:3,Fri:4,Sat:5,Sun:6};var off=map[wd]||0;var dayMs=86400000;\nvar monday=new Date(now.getTime()-off*dayMs);var sunday=new Date(monday.getTime()+6*dayMs);\nvar week_start=ymd(monday);var week_end=ymd(sunday);\nvar items=$input.all().map(function(i){return i.json;}).filter(function(r){return Object.keys(r).length>0;});\nvar totals={};var total=0;\nfor(var k=0;k<items.length;k++){var r=items[k];var c=r.category||'general';var d=Number(r.duration_minutes)||0;totals[c]=(totals[c]||0)+d;total+=d;}\nvar keys=Object.keys(totals).sort(function(a,b){return totals[b]-totals[a];});\nvar lines=keys.map(function(c){return c+' '+fmt(totals[c]);});\nvar breakdown=keys.map(function(c){return c+': '+fmt(totals[c]);}).join(', ');\nvar topCat=keys.length?keys[0]:'';\nvar totalHours=Math.round((total/60)*10)/10;\nvar reply;\nif(total===0){reply='this week:'+LF+'nothing logged yet';}\nelse{reply='this week ('+week_start+' to '+week_end+'):'+LF+lines.join(LF)+LF+LF+'total '+fmt(total);}\nvar recap=(total===0)?('weekly recap ('+week_start+' to '+week_end+')'+LF+'nothing logged this week'):('weekly recap ('+week_start+' to '+week_end+')'+LF+lines.join(LF)+LF+LF+'total '+fmt(total)+LF+'top: '+topCat);\nreturn [{json:{reply:recap,week_start:week_start,week_end:week_end,total_hours:totalHours,category_breakdown:breakdown,top_category:topCat,generated_at:new Date().toISOString()}}];"
+      }
+    },
+    {
+      "id": "7f981bfc-1671-4006-9acc-4cf8b0fdaf48",
+      "name": "Upsert Weekly Summary (review)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        5696
+      ],
+      "parameters": {
+        "resource": "record",
+        "operation": "upsert",
+        "authentication": "airtableTokenApi",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Select daylog base"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "weekly_summary"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "week_start"
+          ],
+          "value": {
+            "week_start": "={{ $json.week_start }}",
+            "week_end": "={{ $json.week_end }}",
+            "total_hours": "={{ $json.total_hours }}",
+            "category_breakdown": "={{ $json.category_breakdown }}",
+            "generated_at": "={{ $json.generated_at }}"
+          }
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "id": "28c23ccd-151b-424e-8407-13e70441fa4a",
+      "name": "Send Weekly Recap",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        5888
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "<__PLACEHOLDER_VALUE__Telegram chat ID for daily standups__>",
+        "text": "={{ $('Aggregate Weekly Review').item.json.reply }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {},
+      "webhookId": "4a8169a6-58e0-41a2-96bf-6f419c14b9db"
+    },
+    {
+      "id": "8b308fee-986c-446b-b03a-c3d66f0e4315",
+      "name": "Sticky Note 8b308fee",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        5952
+      ],
+      "parameters": {
+        "content": "daylog setup\n- Set workflow timezone to Asia/Kolkata (workflow settings).\n- Airtable: pick the daylog base + tables (categories, time_logs, standups, weekly_summary) on each Airtable node.\n- Seed categories: study, reading, gym, walk, coding, college, work, event, chores, general (general = protected fallback).\n- Standup/weekly chat ID placeholder must be filled for scheduled messages.",
+        "width": 420,
+        "height": 220
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Command": {
+      "main": [
+        [
+          {
+            "node": "Get Active Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Log": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "Active? (in)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Active? (out)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Active? (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Active? (now)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Today Logs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Week Logs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Search Active Categories",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Category",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is General? (del)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Active? (note)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is General? (rename)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Category (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Help",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active? (in)": {
+      "main": [
+        [
+          {
+            "node": "Build Busy (in)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Category (in)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Busy (in)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Category (in)": {
+      "main": [
+        [
+          {
+            "node": "Tag Exists? (in)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Exists? (in)": {
+      "main": [
+        [
+          {
+            "node": "Create Log (in)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unknown Tag (in)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Log (in)": {
+      "main": [
+        [
+          {
+            "node": "Build Started (in)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Started (in)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unknown Tag (in)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active? (out)": {
+      "main": [
+        [
+          {
+            "node": "Compute Out (out)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Nothing (out)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Out (out)": {
+      "main": [
+        [
+          {
+            "node": "Update Log (out)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Log (out)": {
+      "main": [
+        [
+          {
+            "node": "Build Stopped (out)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Stopped (out)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Nothing (out)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active? (switch)": {
+      "main": [
+        [
+          {
+            "node": "Compute Out (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Category (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Out (switch)": {
+      "main": [
+        [
+          {
+            "node": "Update Log (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Log (switch)": {
+      "main": [
+        [
+          {
+            "node": "Get Category (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Category (switch)": {
+      "main": [
+        [
+          {
+            "node": "Tag Exists? (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active? (now)": {
+      "main": [
+        [
+          {
+            "node": "Build Now",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Nothing (now)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Now": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Nothing (now)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Today Logs": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Sum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Sum": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Week Logs": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Week": {
+      "main": [
+        [
+          {
+            "node": "Upsert Weekly Summary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Active Categories": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Tags",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Tags": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Category": {
+      "main": [
+        [
+          {
+            "node": "Build Added",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Added": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is General? (del)": {
+      "main": [
+        [
+          {
+            "node": "Build Refuse (del)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Category (del)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Refuse (del)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Category (del)": {
+      "main": [
+        [
+          {
+            "node": "Category Exists? (del)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Exists? (del)": {
+      "main": [
+        [
+          {
+            "node": "Search Logs For Tag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unknown (del)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Logs For Tag": {
+      "main": [
+        [
+          {
+            "node": "Has Logs? (del)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Logs? (del)": {
+      "main": [
+        [
+          {
+            "node": "Update Category (archive)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Category (archive)": {
+      "main": [
+        [
+          {
+            "node": "Build Archived",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Archived": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Category": {
+      "main": [
+        [
+          {
+            "node": "Build Deleted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Deleted": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unknown (del)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active? (note)": {
+      "main": [
+        [
+          {
+            "node": "Compute Note",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create General Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Note": {
+      "main": [
+        [
+          {
+            "node": "Update Log Notes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Log Notes": {
+      "main": [
+        [
+          {
+            "node": "Build Noted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Noted": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create General Note": {
+      "main": [
+        [
+          {
+            "node": "Build Saved (note)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Saved (note)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is General? (rename)": {
+      "main": [
+        [
+          {
+            "node": "Build Refuse (rename)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Category (rename)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Refuse (rename)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Category (rename)": {
+      "main": [
+        [
+          {
+            "node": "Category Exists? (rename)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Exists? (rename)": {
+      "main": [
+        [
+          {
+            "node": "Update Category (rename)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unknown (rename)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Category (rename)": {
+      "main": [
+        [
+          {
+            "node": "Build Renamed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Renamed": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unknown (rename)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Category (bare)": {
+      "main": [
+        [
+          {
+            "node": "Tag Exists? (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Exists? (bare)": {
+      "main": [
+        [
+          {
+            "node": "Active? (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unknown (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active? (bare)": {
+      "main": [
+        [
+          {
+            "node": "Build Nudge (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Log (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Nudge (bare)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Log (bare)": {
+      "main": [
+        [
+          {
+            "node": "Build Started (bare)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Started (bare)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unknown (bare)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Help": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Exists? (switch)": {
+      "main": [
+        [
+          {
+            "node": "Create Log (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Unknown Tag (switch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Log (switch)": {
+      "main": [
+        [
+          {
+            "node": "Build Switched",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Switched": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Unknown Tag (switch)": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Morning 09:00": {
+      "main": [
+        [
+          {
+            "node": "Create Standup (morning)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Standup (morning)": {
+      "main": [
+        [
+          {
+            "node": "Send Standup (morning)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Midday 14:00": {
+      "main": [
+        [
+          {
+            "node": "Create Standup (midday)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Standup (midday)": {
+      "main": [
+        [
+          {
+            "node": "Send Standup (midday)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evening 22:30": {
+      "main": [
+        [
+          {
+            "node": "Create Standup (evening)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Standup (evening)": {
+      "main": [
+        [
+          {
+            "node": "Send Standup (evening)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Sun 20:00": {
+      "main": [
+        [
+          {
+            "node": "Search Week Logs (review)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Week Logs (review)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Weekly Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Weekly Review": {
+      "main": [
+        [
+          {
+            "node": "Upsert Weekly Summary (review)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Weekly Recap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": null
+}

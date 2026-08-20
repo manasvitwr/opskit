@@ -1,0 +1,1387 @@
+{
+  "name": "Content Ops - Post Draft/Schedule X, Pinterest & Substack",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Content Ops\nTelegram → Switch routes slash commands vs drafts.\n**/start /help /draft** → info replies.\n**/posted <platform>** → update Posting Schedule.\n**/posted** (bare) → usage hint.\n**Unknown /command** → hint.\n**Fallback** → LLM polish → create Draft.\n\n⚠️ Pinterest image attachment needs the Telegram file base URL (with bot token) set in \"Set Telegram File Base\".",
+        "height": 260,
+        "width": 460,
+        "color": 4
+      },
+      "id": "d584e472-b241-4058-8c7d-23d48de4641a",
+      "name": "Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "c8293016-48cb-4577-a8ee-f0f6708075df",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        576
+      ],
+      "webhookId": "20df0d85-6102-4a4a-bcfb-1f6a9eab4483",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text || $json.message.caption }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "start"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text || $json.message.caption }}",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "help"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text || $json.message.caption }}",
+                    "rightValue": "/draft",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "draft"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text || $json.message.caption }}",
+                    "rightValue": "/posted ",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "posted-arg"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text || $json.message.caption }}",
+                    "rightValue": "/posted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "posted-bare"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text || $json.message.caption }}",
+                    "rightValue": "/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "unknown"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Draft"
+        }
+      },
+      "id": "4f810c9e-49a3-40cf-a891-0ba2f6f957d2",
+      "name": "Route Command vs Draft",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "yo. drop a draft and i’ll clean it up.\n\nuse this format:\n\np: x\nt: dry wit, low-key\nn: fix grammar, keep it non-cringe\nc: your raw content\n\ntype /draft anytime to see this again.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "183dbe40-55e7-4ead-bdbb-c9a8b24fa842",
+      "name": "Send /start",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ],
+      "webhookId": "a6443011-7cf9-4830-b663-53da07ddbb95",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "commands:\n\n/posted x\nmark x as posted in airtable\n\n/draft\nshow the draft format\n\n/help\nshow this message\n\ndraft format:\n\np: platform\nt: tone\nn: notes\nc: raw content",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "8dfe8b5f-bcde-4dbb-b758-3ec6d31748e6",
+      "name": "Send /help",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        192
+      ],
+      "webhookId": "2fb7eeff-e0f3-4929-bfab-81bffe144111",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "use this format:\n\np: platform\nt: tone\nn: notes\nc: raw content\n\nexample:\n\np: x\nt: dry wit, low-key\nn: fix grammar, keep it non-cringe\nc: building this n8n pipeline was pain but we shipped",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "fa9b7890-3b30-4711-9bfc-7d089e4e2b88",
+      "name": "Send /draft",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        384
+      ],
+      "webhookId": "606ca96a-7619-44b4-9483-5e02b426bc81",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = ($json.message && ($json.message.text || $json.message.caption)) || '';\nconst raw = text.replace('/posted', '').trim().toLowerCase();\nconst map = { x: 'X', pinterest: 'Pinterest', substack: 'Substack' };\nconst platform = map[raw] || (raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '');\nreturn [{ json: { platform, chat_id: $json.message && $json.message.chat ? $json.message.chat.id : null } }];"
+      },
+      "id": "8b330b55-381c-44b4-a498-9711b5b0df83",
+      "name": "Extract Platform (A)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appINMrv65eFPsoce",
+          "mode": "list",
+          "cachedResultName": "Content Ops",
+          "cachedResultUrl": "https://airtable.com/appINMrv65eFPsoce"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblp23e7kddQ5hDs2",
+          "mode": "list",
+          "cachedResultName": "Posting Schedule",
+          "cachedResultUrl": "https://airtable.com/appINMrv65eFPsoce/tblp23e7kddQ5hDs2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Platform": "={{ $json.platform }}",
+            "Last Posted Date": "={{ $now.format('yyyy-MM-dd') }}",
+            "Last Posted Time": "={{ $now.format('HH:mm') }}",
+            "Updated Via": "Telegram Command"
+          },
+          "matchingColumns": [
+            "Platform"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Id",
+              "displayName": "Id",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Best Time Slots",
+              "displayName": "Best Time Slots",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Posted Date",
+              "displayName": "Last Posted Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Posted Time",
+              "displayName": "Last Posted Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Updated Via",
+              "displayName": "Updated Via",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Next Recommended Slot",
+              "displayName": "Next Recommended Slot",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "X",
+                  "value": "X"
+                },
+                {
+                  "name": "Pinterest",
+                  "value": "Pinterest"
+                },
+                {
+                  "name": "Substack",
+                  "value": "Substack"
+                },
+                {
+                  "name": "Instagram",
+                  "value": "Instagram"
+                },
+                {
+                  "name": "Facebook",
+                  "value": "Facebook"
+                },
+                {
+                  "name": "Twitter",
+                  "value": "Twitter"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "e5d84d54-e3ce-46a0-bc9d-d33a968c96e2",
+      "name": "Update Posting Schedule",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        576
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=✅ Logged: Successfully updated last posted date/time for {{ $('Extract Platform (A)').item.json.platform }}.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d8b4aa62-3beb-4e2e-8164-fbf2c8b140a6",
+      "name": "Confirm Schedule Update",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1024,
+        576
+      ],
+      "webhookId": "da05cb2b-680e-484a-b0cb-3eb294d04d38",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "tell me what platform you posted on.\n\nexample:\n\n/posted x\n/posted linkedin\n/posted substack",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e22891ba-e82b-432e-a3c8-29a1a81b019c",
+      "name": "Send /posted Hint",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        768
+      ],
+      "webhookId": "1500d726-0f7a-42c3-b3a8-2ce04057b562",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "don’t know that one.\n\ntry:\n\n/help\n/draft\n/posted x",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "3003821b-ea08-4a8e-894c-5e5eb50abf63",
+      "name": "Send Unknown Command",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        960
+      ],
+      "webhookId": "1088113e-3783-45ba-b54b-2a27332ef2b4",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message || {};\nconst text = msg.text || msg.caption || '';\n\n// Regex extractor: captures everything after a tag until it hits the next tag (or end of message)\nconst extract = (tag) => {\n  const regex = new RegExp(`${tag}:\\\\s*([\\\\s\\\\S]*?)(?=\\\\s+(?:p|t|n|c):|$)`, 'i');\n  const match = text.match(regex);\n  return match ? match[1].trim() : '';\n};\n\n// Extract fields regardless of line breaks or spaces\nconst rawPlatform = extract('p').toLowerCase();\nconst tone = extract('t');\nconst notes = extract('n');\nlet rawContent = extract('c');\n\n// Fallback: If you don't use the c: tag at all, treat the whole block as raw content\nif (!rawContent && !text.match(/(?:p|t|n|c):/i)) {\n  rawContent = text.trim();\n}\n\n// Expanded Abbreviation & Capitalization Mapping\nconst platformMap = {\n  'x': 'x',\n  'twitter': 'x',\n  'twit': 'x',\n  'tw': 'x',\n  \n  'pinterest': 'pinterest',\n  'pin': 'pinterest',\n  \n  'linkedin': 'LinkedIn',\n  'link': 'LinkedIn',\n  'lkdin': 'LinkedIn',\n  'in': 'LinkedIn',\n  \n  'substack': 'substack',\n  'sub': 'substack'\n};\n\n// Map the abbreviation to the exact Airtable spelling, or fallback to whatever you typed\nconst platform = platformMap[rawPlatform] || rawPlatform;\n\n// Handle image extraction logic\nconst photos = Array.isArray(msg.photo) ? msg.photo : [];\nconst largest = photos.length ? photos[photos.length - 1] : null;\n\nreturn [{ json: {\n  platform,\n  tone,\n  notes,\n  raw_content: rawContent,\n  has_photo: !!largest && platform === 'pinterest', // Maps any 'pin' input to 'pinterest' first, then checks\n  photo_file_id: largest ? largest.file_id : '',\n  chat_id: msg.chat ? msg.chat.id : null,\n} }];"
+      },
+      "id": "c32fc57e-a196-4629-a366-a863e8e33f03",
+      "name": "Parse Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "temperature": null
+        }
+      },
+      "id": "12d11663-96b4-4e5b-93cc-d3b4809be9a1",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        1376
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "wbyRrjNyM09x9gaM",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const src = $('Parse Draft').item.json;\n\nconst out =\n  $json.text ??\n  $json.output ??\n  $json.response ??\n  $json.message?.content ??\n  '';\n\nconst polished = typeof out === 'string'\n  ? out.trim()\n  : String(out || '').trim();\n\nreturn [{\n  json: {\n    platform: src.platform,\n    raw_input: src.raw_content,\n    polished_text: polished,\n    theme_concept: src.tone || '',\n    notes: src.notes || '',\n    has_photo: src.has_photo,\n    photo_file_id: src.photo_file_id,\n    chat_id: src.chat_id,\n  }\n}];"
+      },
+      "id": "cb9647e4-cf5d-4dff-8eb1-e4d0a45487cb",
+      "name": "Parse LLM Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-photo",
+              "leftValue": "={{ $json.has_photo }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "40aaee24-59c4-45d3-98f6-459119eab779",
+      "name": "Has Pinterest Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "file-base",
+              "name": "file_base",
+              "type": "string",
+              "value": "https://api.telegram.org/file/botYOUR_BOT_TOKEN_HERE"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "88d68cba-0c05-45b1-8adb-2ed86a24be08",
+      "name": "Set Telegram File Base",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1472,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.photo_file_id }}",
+        "download": false
+      },
+      "id": "7ccd700f-e179-492e-a2f4-9731149e17ef",
+      "name": "Get Telegram File",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1696,
+        1056
+      ],
+      "webhookId": "4a9bfe5b-f0e4-44d5-a669-824e41feb246",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "image-url",
+              "name": "image_url",
+              "type": "string",
+              "value": "={{ $('Set Telegram File Base').item.json.file_base }}/{{ $json.result.file_path }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a43aafe3-8fa7-4760-aa40-4527c15ff139",
+      "name": "Build Image URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1920,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appINMrv65eFPsoce",
+          "mode": "list",
+          "cachedResultName": "Content Ops",
+          "cachedResultUrl": "https://airtable.com/appINMrv65eFPsoce"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl5FHloQYbr0pK43",
+          "mode": "list",
+          "cachedResultName": "Drafts",
+          "cachedResultUrl": "https://airtable.com/appINMrv65eFPsoce/tbl5FHloQYbr0pK43"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Platform": "={{ $('Parse LLM Output').item.json.platform }}",
+            "Raw Input": "={{ $('Parse LLM Output').item.json.raw_input }}",
+            "Polished Text": "={{ $('Parse LLM Output').item.json.polished_text }}",
+            "Theme & Concept": "={{ $('Parse LLM Output').item.json.theme_concept }}",
+            "Image": "={{ [{ \"url\": $json.image_url }] }}",
+            "Status": "Draft",
+            "Word Count": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Draft ID",
+              "displayName": "Draft ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "X",
+                  "value": "X"
+                },
+                {
+                  "name": "Pinterest",
+                  "value": "Pinterest"
+                },
+                {
+                  "name": "Substack",
+                  "value": "Substack"
+                },
+                {
+                  "name": "Instagram",
+                  "value": "Instagram"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "x",
+                  "value": "x"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Raw Input",
+              "displayName": "Raw Input",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Polished Text",
+              "displayName": "Polished Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Theme & Concept",
+              "displayName": "Theme & Concept",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Image",
+              "displayName": "Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Ready",
+                  "value": "Ready"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                },
+                {
+                  "name": "Scheduled",
+                  "value": "Scheduled"
+                },
+                {
+                  "name": "Published",
+                  "value": "Published"
+                },
+                {
+                  "name": "Ready for AI processing",
+                  "value": "Ready for AI processing"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Word Count",
+              "displayName": "Word Count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Content Summary",
+              "displayName": "Content Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Image Description",
+              "displayName": "Image Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "f571a1e4-114a-4094-9eb9-a334266f3478",
+      "name": "Create Draft (with Image)",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        1056
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=cool - polished and queued for {{ $('Parse LLM Output').item.json.platform }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a79445dd-9cfc-4550-94d3-69d4eef93c47",
+      "name": "Confirm Draft Queued",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        1152
+      ],
+      "webhookId": "99d8d325-7d9b-4b4b-a956-a7521c8c1aae",
+      "credentials": {
+        "telegramApi": {
+          "id": "114B6ehiG8IiJIUg",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appINMrv65eFPsoce",
+          "mode": "list",
+          "cachedResultName": "Content Ops",
+          "cachedResultUrl": "https://airtable.com/appINMrv65eFPsoce"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl5FHloQYbr0pK43",
+          "mode": "list",
+          "cachedResultName": "Drafts",
+          "cachedResultUrl": "https://airtable.com/appINMrv65eFPsoce/tbl5FHloQYbr0pK43"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Platform": "={{ $json.platform }}",
+            "Raw Input": "={{ $json.raw_input }}",
+            "Polished Text": "={{ $json.polished_text }}",
+            "Theme & Concept": "={{ $json.theme_concept }}",
+            "Status": "Draft",
+            "Word Count": 0
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Draft ID",
+              "displayName": "Draft ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "X",
+                  "value": "X"
+                },
+                {
+                  "name": "Pinterest",
+                  "value": "Pinterest"
+                },
+                {
+                  "name": "Substack",
+                  "value": "Substack"
+                },
+                {
+                  "name": "Instagram",
+                  "value": "Instagram"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Raw Input",
+              "displayName": "Raw Input",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Polished Text",
+              "displayName": "Polished Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Theme & Concept",
+              "displayName": "Theme & Concept",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Image",
+              "displayName": "Image",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Draft",
+                  "value": "Draft"
+                },
+                {
+                  "name": "Ready",
+                  "value": "Ready"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                },
+                {
+                  "name": "Scheduled",
+                  "value": "Scheduled"
+                },
+                {
+                  "name": "Published",
+                  "value": "Published"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Word Count",
+              "displayName": "Word Count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Content Summary",
+              "displayName": "Content Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Image Description",
+              "displayName": "Image Description",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "e5587ce2-7f56-4f27-9f07-c1926e19d156",
+      "name": "Create Draft",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        1248
+      ],
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "ENqOLxenk0q8FUkt",
+          "name": "Content Ops Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "=platform: {{ $json.platform }}\ntheme/context: {{ $json.tone }}\nnotes: {{ $json.notes }}\n\ndraft:\n{{ $json.raw_content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "role: precise copy editor.\n\ntask: lightly polish short social drafts.\n\nconstraints:\n- preserve meaning, structure, voice, and approximate length\n- only fix grammar, spelling, punctuation, clarity, and light flow\n- use theme/context only to guide word choice, not to add ideas\n- do not add hooks, hashtags, emojis, claims, or explanations\n- do not analyze or mention changes\n- if already fine, return unchanged\n- keep original casing style unless grammar requires otherwise\n\noutput:\nreturn only the polished draft text."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "c1dca8d8-0560-4ee0-9b24-44a9113bcdc6",
+      "name": "Theme/Tone",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        672,
+        1152
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route Command vs Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Command vs Draft": {
+      "main": [
+        [
+          {
+            "node": "Send /start",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send /help",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send /draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Platform (A)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send /posted Hint",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Unknown Command",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Platform (A)": {
+      "main": [
+        [
+          {
+            "node": "Update Posting Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Posting Schedule": {
+      "main": [
+        [
+          {
+            "node": "Confirm Schedule Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Draft": {
+      "main": [
+        [
+          {
+            "node": "Theme/Tone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Theme/Tone",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Output": {
+      "main": [
+        [
+          {
+            "node": "Has Pinterest Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Pinterest Image?": {
+      "main": [
+        [
+          {
+            "node": "Set Telegram File Base",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Telegram File Base": {
+      "main": [
+        [
+          {
+            "node": "Get Telegram File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Telegram File": {
+      "main": [
+        [
+          {
+            "node": "Build Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image URL": {
+      "main": [
+        [
+          {
+            "node": "Create Draft (with Image)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Draft (with Image)": {
+      "main": [
+        [
+          {
+            "node": "Confirm Draft Queued",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Draft": {
+      "main": [
+        [
+          {
+            "node": "Confirm Draft Queued",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Theme/Tone": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 1,
+  "meta": null
+}
